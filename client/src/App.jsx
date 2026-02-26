@@ -1,31 +1,15 @@
-import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Artist from "./pages/Artist";
 
 function App() {
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        fetch("http://localhost:3000/auth/me", { credentials: "include" })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.id) setUser(data);
-            });
-    }, []);
-
     return (
-        <div>
-            {user ? (
-                <p>Hello, {user.name}</p>
-            ) : (
-                <button
-                    onClick={() =>
-                        (window.location.href =
-                            "http://localhost:3000/auth/google")
-                    }
-                >
-                    Login with Google
-                </button>
-            )}
-        </div>
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/artists/:id" element={<Artist />} />
+            </Routes>
+        </BrowserRouter>
     );
 }
 
