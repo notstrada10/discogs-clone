@@ -1,14 +1,30 @@
+import { useState, useEffect } from "react";
+
 function App() {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        fetch("http://localhost:3000/auth/me", { credentials: "include" })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.id) setUser(data);
+            });
+    }, []);
+
     return (
-        <div className="bg-red-500 text-white p-8">
-            <h1 className="text-3xl font-bold">Discogs Clone</h1>
-            <button
-                onClick={() =>
-                    (window.location.href = "http://localhost:3000/auth/google")
-                }
-            >
-                Login with Google
-            </button>
+        <div>
+            {user ? (
+                <p>Hello, {user.name}</p>
+            ) : (
+                <button
+                    onClick={() =>
+                        (window.location.href =
+                            "http://localhost:3000/auth/google")
+                    }
+                >
+                    Login with Google
+                </button>
+            )}
         </div>
     );
 }

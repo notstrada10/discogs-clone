@@ -48,9 +48,30 @@ app.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     function (req, res) {
-        res.redirect("/");
+        res.redirect("http://localhost:5173");
     },
 );
+
+app.get("/auth/me", (req, res) => {
+    if (req.isAuthenticated()) {
+        res.json(req.user);
+    } else {
+        res.status(401).json({ error: "Not logged in" });
+    }
+});
+
+app.get("/artists", async (req, res) => {
+    const result = await pool.query("SELECT * FROM artists");
+    res.json(result.rows);
+});
+
+app.get("/artists/:id/albums", async (req, res) => {
+    const result = await pool.query(
+        "SELECT * FROM albums WHERE artist_id = $1",
+        [req.params.id],
+    );
+    res.json(result.rows);
+});
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
