@@ -73,6 +73,13 @@ app.get("/artists/:id/albums", async (req, res) => {
     res.json(result.rows);
 });
 
+app.get("/auth/logout", (req, res) => {
+    req.logout((err) => {
+        if (err) return res.status(500).json({ error: "Logout failed" });
+        res.redirect("http://localhost:5173");
+    });
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
