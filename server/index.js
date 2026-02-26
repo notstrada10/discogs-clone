@@ -3,6 +3,7 @@ const { Pool } = require("pg");
 const express = require("express");
 const session = require("express-session");
 const passport = require("passport");
+const cors = require("cors");
 require("./auth");
 
 const app = express();
@@ -11,6 +12,13 @@ const port = 3000;
 const pool = new Pool({
     database: "discogs_clone",
 });
+
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    }),
+);
 
 app.use(
     session({
