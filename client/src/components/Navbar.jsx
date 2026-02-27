@@ -15,7 +15,7 @@ function Navbar({ user }) {
                         className="bg-yellow-400 text-black px-4 py-2 rounded font-semibold"
                         onClick={() =>
                             (window.location.href =
-                                "http://localhost:3000/auth/logout")
+                                `${import.meta.env.VITE_API_URL}/auth/logout`)
                         }
                     >
                         Logout
@@ -26,7 +26,7 @@ function Navbar({ user }) {
                     className="bg-yellow-400 text-black px-4 py-2 rounded font-semibold"
                     onClick={() =>
                         (window.location.href =
-                            "http://localhost:3000/auth/google")
+                            `${import.meta.env.VITE_API_URL}/auth/google`)
                     }
                 >
                     Login with Google

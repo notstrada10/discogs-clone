@@ -11,7 +11,7 @@ function App() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        fetch("http://localhost:3000/auth/me", { credentials: "include" })
+        fetch(`${import.meta.env.VITE_API_URL}/auth/me`, { credentials: "include" })
             .then((res) => res.json())
             .then((data) => {
                 if (data.id) setUser(data);

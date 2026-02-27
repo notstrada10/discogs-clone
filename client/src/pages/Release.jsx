@@ -7,7 +7,7 @@ function Release() {
     const [lightboxIndex, setLightboxIndex] = useState(null);
 
     useEffect(() => {
-        fetch(`http://localhost:3000/discogs/releases/${id}`)
+        fetch(`${import.meta.env.VITE_API_URL}/discogs/releases/${id}`)
             .then((res) => res.json())
             .then((data) => setRelease(data));
     }, []);

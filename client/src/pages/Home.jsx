@@ -19,7 +19,7 @@ function Home() {
         Promise.all(
             FEATURED_ARTISTS.map((name) =>
                 fetch(
-                    `http://localhost:3000/discogs/artist?q=${encodeURIComponent(name)}`,
+                    `${import.meta.env.VITE_API_URL}/discogs/artist?q=${encodeURIComponent(name)}`,
                 )
                     .then((res) => res.json())
                     .then((data) => ({ name, cover_image: data.cover_image })),

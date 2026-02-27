@@ -7,15 +7,15 @@ const cors = require("cors");
 require("./auth");
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const pool = new Pool({
-    database: "discogs_clone",
-});
+const pool = process.env.DATABASE_URL
+    ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+    : new Pool({ database: "discogs_clone" });
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: process.env.CLIENT_URL || "http://localhost:5173",
         credentials: true,
     }),
 );
@@ -48,7 +48,7 @@ app.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     function (req, res) {
-        res.redirect("http://localhost:5173");
+        res.redirect(process.env.CLIENT_URL || "http://localhost:5173");
     },
 );
 
@@ -186,7 +186,7 @@ app.get("/discogs/masters/:id/versions/all", async (req, res) => {
 app.get("/auth/logout", (req, res) => {
     req.logout((err) => {
         if (err) return res.status(500).json({ error: "Logout failed" });
-        res.redirect("http://localhost:5173");
+        res.redirect(process.env.CLIENT_URL || "http://localhost:5173");
     });
 });
 

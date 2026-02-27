@@ -13,11 +13,11 @@ function Master() {
     const [formatFilter, setFormatFilter] = useState("");
 
     useEffect(() => {
-        fetch(`http://localhost:3000/discogs/masters/${id}`)
+        fetch(`${import.meta.env.VITE_API_URL}/discogs/masters/${id}`)
             .then((res) => res.json())
             .then((data) => setMaster(data));
 
-        fetch(`http://localhost:3000/discogs/masters/${id}/versions/all`)
+        fetch(`${import.meta.env.VITE_API_URL}/discogs/masters/${id}/versions/all`)
             .then((res) => res.json())
             .then((data) => {
                 setAllVersions(data.versions ?? []);

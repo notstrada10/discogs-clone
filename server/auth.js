@@ -2,7 +2,9 @@ require("dotenv").config();
 const passport = require("passport");
 
 const { Pool } = require("pg");
-const pool = new Pool({ database: "discogs_clone" });
+const pool = process.env.DATABASE_URL
+    ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+    : new Pool({ database: "discogs_clone" });
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -14,7 +16,9 @@ passport.use(
         {
             clientID: GOOGLE_CLIENT_ID,
             clientSecret: GOOGLE_CLIENT_SECRET,
-            callbackURL: "http://localhost:3000/auth/google/callback",
+            callbackURL: process.env.SERVER_URL
+                ? `${process.env.SERVER_URL}/auth/google/callback`
+                : "http://localhost:3000/auth/google/callback",
         },
         async function (accessToken, refreshToken, profile, cb) {
             try {

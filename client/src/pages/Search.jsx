@@ -18,7 +18,7 @@ function Search() {
     async function doSearch(q) {
         setLoading(true);
         const res = await fetch(
-            `http://localhost:3000/discogs/releases?q=${encodeURIComponent(q)}`,
+            `${import.meta.env.VITE_API_URL}/discogs/releases?q=${encodeURIComponent(q)}`,
         );
         const data = await res.json();
         setResults(data);
