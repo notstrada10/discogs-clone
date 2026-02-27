@@ -7,8 +7,9 @@ CREATE TABLE users (
 
 CREATE TABLE artists (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    image_url TEXT
 );
 
 CREATE TABLE albums (
@@ -16,7 +17,9 @@ CREATE TABLE albums (
     artist_id INT REFERENCES artists(id),
     title VARCHAR(255) NOT NULL,
     release_year INT,
-    genre VARCHAR(255)
+    genre VARCHAR(255),
+    image_url TEXT,
+    UNIQUE (artist_id, title)
 );
 
 CREATE TABLE collections(
