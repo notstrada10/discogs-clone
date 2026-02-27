@@ -45,14 +45,6 @@ app.get("/health", async (req, res) => {
 
 app.get(
     "/auth/google",
-    (req, res, next) => {
-        const originalRedirect = res.redirect.bind(res);
-        res.redirect = (url) => {
-            console.log("GOOGLE AUTH REDIRECT URL:", url);
-            originalRedirect(url);
-        };
-        next();
-    },
     passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
