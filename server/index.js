@@ -43,6 +43,15 @@ app.get("/health", async (req, res) => {
     });
 });
 
+app.get("/auth/google/debug", (req, res, next) => {
+    const mockRes = {
+        setHeader: () => {},
+        end: () => {},
+        redirect: (url) => res.json({ redirectUrl: url }),
+    };
+    passport.authenticate("google", { scope: ["profile", "email"] })(req, mockRes, next);
+});
+
 app.get(
     "/auth/google",
     passport.authenticate("google", { scope: ["profile", "email"] }),
