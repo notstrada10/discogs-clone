@@ -34,9 +34,18 @@ function Master() {
         .filter((v) => !countryFilter || v.country === countryFilter)
         .filter((v) => !formatFilter || v.format === formatFilter);
 
-    const years = [...new Set(allVersions.map((v) => v.released).filter(Boolean))].sort();
-    const countries = [...new Set(allVersions.map((v) => v.country).filter(Boolean))].sort();
-    const formats = [...new Set(allVersions.map((v) => v.format).filter(Boolean))].sort();
+    const years = [...new Set(allVersions
+        .filter((v) => !countryFilter || v.country === countryFilter)
+        .filter((v) => !formatFilter || v.format === formatFilter)
+        .map((v) => v.released).filter(Boolean))].sort();
+    const countries = [...new Set(allVersions
+        .filter((v) => !yearFilter || String(v.released) === yearFilter)
+        .filter((v) => !formatFilter || v.format === formatFilter)
+        .map((v) => v.country).filter(Boolean))].sort();
+    const formats = [...new Set(allVersions
+        .filter((v) => !yearFilter || String(v.released) === yearFilter)
+        .filter((v) => !countryFilter || v.country === countryFilter)
+        .map((v) => v.format).filter(Boolean))].sort();
 
     return (
         <div className="max-w-4xl mx-auto px-6 py-10">
@@ -65,7 +74,11 @@ function Master() {
             <div className="flex gap-3 mb-6 flex-wrap">
                 <select
                     value={yearFilter}
-                    onChange={(e) => setYearFilter(e.target.value)}
+                    onChange={(e) => {
+                        setYearFilter(e.target.value);
+                        setCountryFilter("");
+                        setFormatFilter("");
+                    }}
                     className="bg-white text-gray-900 px-3 py-2 rounded border border-gray-300"
                 >
                     <option value="">All Years</option>
@@ -77,7 +90,10 @@ function Master() {
                 </select>
                 <select
                     value={countryFilter}
-                    onChange={(e) => setCountryFilter(e.target.value)}
+                    onChange={(e) => {
+                        setCountryFilter(e.target.value);
+                        setFormatFilter("");
+                    }}
                     className="bg-white text-gray-900 px-3 py-2 rounded border border-gray-300"
                 >
                     <option value="">All Countries</option>
