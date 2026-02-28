@@ -211,6 +211,42 @@ app.get("/discogs/releases/:id", async (req, res) => {
     res.json(data);
 });
 
+app.get("/collection", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    const result = await pool.query(
+        `SELECT c.id, c.condition, c.discogs_release_id, c.title, c.artist, c.cover_image, c.year
+         FROM collections c
+         WHERE c.user_id = $1
+         ORDER BY c.id DESC`,
+        [req.user.id]
+    );
+    res.json(result.rows);
+});
+
+app.post("/collection", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    const { discogs_release_id, condition, title, artist, cover_image, year } = req.body;
+    const existing = await pool.query(
+        "SELECT id FROM collections WHERE user_id = $1 AND discogs_release_id = $2",
+        [req.user.id, discogs_release_id]
+    );
+    if (existing.rows.length > 0) return res.status(409).json({ error: "Already in collection" });
+    const result = await pool.query(
+        "INSERT INTO collections (user_id, discogs_release_id, condition, title, artist, cover_image, year) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+        [req.user.id, discogs_release_id, condition, title, artist, cover_image, year]
+    );
+    res.json(result.rows[0]);
+});
+
+app.delete("/collection/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    await pool.query(
+        "DELETE FROM collections WHERE id = $1 AND user_id = $2",
+        [req.params.id, req.user.id]
+    );
+    res.json({ success: true });
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });

@@ -10,6 +10,9 @@ function Navbar({ user }) {
             </div>
             {user ? (
                 <div className="flex items-center gap-4">
+                    <Link to="/collection" className="text-gray-300 hover:text-white text-sm">
+                        My Collection
+                    </Link>
                     <span className="text-gray-300">{user.name}</span>
                     <button
                         className="bg-yellow-400 text-black px-4 py-2 rounded font-semibold"

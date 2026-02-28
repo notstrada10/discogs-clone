@@ -25,8 +25,13 @@ CREATE TABLE albums (
 CREATE TABLE collections(
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
-    album_id INT REFERENCES albums(id),
-    condition VARCHAR(10) CHECK (condition IN ('M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P'))
+    discogs_release_id INT NOT NULL,
+    condition VARCHAR(10) CHECK (condition IN ('M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P')),
+    title VARCHAR(255),
+    artist VARCHAR(255),
+    cover_image TEXT,
+    year INT,
+    UNIQUE (user_id, discogs_release_id)
 );
 
 CREATE TABLE listings(

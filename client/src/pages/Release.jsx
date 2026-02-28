@@ -1,16 +1,29 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 
-function Release() {
+const CONDITIONS = ["M", "NM", "VG+", "VG", "G+", "G", "F", "P"];
+
+function Release({ user }) {
     const { id } = useParams();
     const [release, setRelease] = useState(null);
     const [lightboxIndex, setLightboxIndex] = useState(null);
+    const [collectionEntry, setCollectionEntry] = useState(null);
+    const [condition, setCondition] = useState("VG+");
 
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/discogs/releases/${id}`)
             .then((res) => res.json())
             .then((data) => setRelease(data));
-    }, []);
+
+        if (user) {
+            fetch(`${import.meta.env.VITE_API_URL}/collection`, { credentials: "include" })
+                .then((res) => res.json())
+                .then((data) => {
+                    const entry = data.find((item) => String(item.discogs_release_id) === String(id));
+                    setCollectionEntry(entry ?? null);
+                });
+        }
+    }, [user]);
 
     useEffect(() => {
         function handleKey(e) {
@@ -22,6 +35,32 @@ function Release() {
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
     }, [lightboxIndex, release]);
+
+    async function addToCollection() {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/collection`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                discogs_release_id: Number(id),
+                condition,
+                title: release.title,
+                artist: release.artists?.[0]?.name ?? null,
+                cover_image: release.images?.[0]?.uri ?? null,
+                year: release.year ?? null,
+            }),
+        });
+        const data = await res.json();
+        if (res.ok) setCollectionEntry(data);
+    }
+
+    async function removeFromCollection() {
+        await fetch(`${import.meta.env.VITE_API_URL}/collection/${collectionEntry.id}`, {
+            method: "DELETE",
+            credentials: "include",
+        });
+        setCollectionEntry(null);
+    }
 
     if (!release) return <p className="p-6">Loading...</p>;
 
@@ -105,6 +144,37 @@ function Release() {
                         <Link to={`/masters/${release.master_id}`} className="text-yellow-400 text-sm hover:underline mt-2 self-start">
                             See all versions →
                         </Link>
+                    )}
+
+                    {user && (
+                        <div className="flex items-center gap-2 mt-3">
+                            {collectionEntry ? (
+                                <button
+                                    onClick={removeFromCollection}
+                                    className="text-sm bg-gray-700 text-white px-4 py-2 rounded hover:bg-red-700"
+                                >
+                                    ✓ In Collection · Remove
+                                </button>
+                            ) : (
+                                <>
+                                    <select
+                                        value={condition}
+                                        onChange={(e) => setCondition(e.target.value)}
+                                        className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 text-sm"
+                                    >
+                                        {CONDITIONS.map((c) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={addToCollection}
+                                        className="text-sm bg-yellow-400 text-black px-4 py-2 rounded font-semibold hover:bg-yellow-300"
+                                    >
+                                        + Add to Collection
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
