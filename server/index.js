@@ -8,6 +8,7 @@ require("./auth");
 
 const app = express();
 app.set("trust proxy", 1);
+app.use(express.json());
 const port = process.env.PORT || 3000;
 
 const pool = process.env.DATABASE_URL
