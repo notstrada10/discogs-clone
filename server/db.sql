@@ -36,9 +36,12 @@ CREATE TABLE collections(
 
 CREATE TABLE listings(
     id SERIAL PRIMARY KEY,
-    album_id INT REFERENCES albums(id),
+    discogs_release_id INT NOT NULL,
     seller_id INT REFERENCES users(id),
     price DECIMAL(10, 2),
     condition VARCHAR(10) CHECK (condition IN ('M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P')),
-    description TEXT
+    description TEXT,
+    title VARCHAR(255),
+    artist VARCHAR(255),
+    cover_image TEXT
 );

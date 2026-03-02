@@ -9,11 +9,23 @@ function Release({ user }) {
     const [lightboxIndex, setLightboxIndex] = useState(null);
     const [collectionEntry, setCollectionEntry] = useState(null);
     const [condition, setCondition] = useState("VG+");
+    const [listings, setListings] = useState([]);
+    const [sellPrice, setSellPrice] = useState("");
+    const [sellCondition, setSellCondition] = useState("VG+");
+    const [sellDescription, setSellDescription] = useState("");
+    const [myListing, setMyListing] = useState(null);
 
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/discogs/releases/${id}`)
             .then((res) => res.json())
             .then((data) => setRelease(data));
+
+        fetch(`${import.meta.env.VITE_API_URL}/listings/${id}`)
+            .then((res) => res.json())
+            .then((data) => {
+                setListings(data);
+                if (user) setMyListing(data.find((l) => l.seller_id === user.id) ?? null);
+            });
 
         if (user) {
             fetch(`${import.meta.env.VITE_API_URL}/collection`, { credentials: "include" })
@@ -52,6 +64,47 @@ function Release({ user }) {
         });
         const data = await res.json();
         if (res.ok) setCollectionEntry(data);
+    }
+
+    async function createListing() {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/listings`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                discogs_release_id: Number(id),
+                price: parseFloat(sellPrice),
+                condition: sellCondition,
+                description: sellDescription,
+                title: release.title,
+                artist: release.artists?.[0]?.name ?? null,
+                cover_image: release.images?.[0]?.uri ?? null,
+            }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            setMyListing(data);
+            setListings((prev) => [...prev, { ...data, seller_name: user.name }]);
+        }
+    }
+
+    async function cancelListing() {
+        await fetch(`${import.meta.env.VITE_API_URL}/listings/${myListing.id}`, {
+            method: "DELETE",
+            credentials: "include",
+        });
+        setListings((prev) => prev.filter((l) => l.id !== myListing.id));
+        setMyListing(null);
+    }
+
+    async function buyListing(listing) {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/listings/${listing.id}/buy`, {
+            method: "POST",
+            credentials: "include",
+        });
+        if (res.ok) {
+            setListings((prev) => prev.filter((l) => l.id !== listing.id));
+        }
     }
 
     async function removeFromCollection() {
@@ -246,6 +299,111 @@ function Release({ user }) {
                 </div>
             )}
 
+            {/* Marketplace */}
+            <div className="mb-10">
+                <h2 className="text-xl font-semibold mb-4">Marketplace</h2>
+
+                {/* Sell form */}
+                {user && collectionEntry && !myListing && (
+                    <div className="bg-gray-900 rounded-lg p-4 mb-6">
+                        <p className="text-sm font-semibold mb-3">List your copy for sale</p>
+                        <div className="flex flex-wrap gap-3 items-end">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">Price (USD)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={sellPrice}
+                                    onChange={(e) => setSellPrice(e.target.value)}
+                                    placeholder="9.99"
+                                    className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 text-sm w-28"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-gray-400">Condition</label>
+                                <select
+                                    value={sellCondition}
+                                    onChange={(e) => setSellCondition(e.target.value)}
+                                    className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 text-sm"
+                                >
+                                    {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1 flex-1 min-w-40">
+                                <label className="text-xs text-gray-400">Notes (optional)</label>
+                                <input
+                                    type="text"
+                                    value={sellDescription}
+                                    onChange={(e) => setSellDescription(e.target.value)}
+                                    placeholder="e.g. Original pressing, no scratches"
+                                    className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 text-sm"
+                                />
+                            </div>
+                            <button
+                                onClick={createListing}
+                                disabled={!sellPrice}
+                                className="bg-yellow-400 text-black px-4 py-2 rounded font-semibold text-sm hover:bg-yellow-300 disabled:opacity-40"
+                            >
+                                List for Sale
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {user && myListing && (
+                    <div className="bg-gray-900 rounded-lg p-4 mb-6 flex items-center justify-between">
+                        <p className="text-sm text-gray-300">
+                            Your listing: <span className="text-white font-semibold">${parseFloat(myListing.price).toFixed(2)}</span> · {myListing.condition}
+                        </p>
+                        <button
+                            onClick={cancelListing}
+                            className="text-sm text-red-400 hover:underline"
+                        >
+                            Cancel listing
+                        </button>
+                    </div>
+                )}
+
+                {listings.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No copies for sale.</p>
+                ) : (
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="text-left text-gray-500 border-b border-gray-800">
+                                <th className="py-2 pr-4">Seller</th>
+                                <th className="py-2 pr-4">Condition</th>
+                                <th className="py-2 pr-4">Notes</th>
+                                <th className="py-2 text-right">Price</th>
+                                <th className="py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {listings.map((l) => (
+                                <tr key={l.id} className="border-b border-gray-800">
+                                    <td className="py-3 pr-4 text-gray-300">{l.seller_name}</td>
+                                    <td className="py-3 pr-4">{l.condition}</td>
+                                    <td className="py-3 pr-4 text-gray-500">{l.description ?? "—"}</td>
+                                    <td className="py-3 text-right font-semibold">${parseFloat(l.price).toFixed(2)}</td>
+                                    <td className="py-3 pl-4">
+                                        {user && l.seller_id !== user.id && (
+                                            <button
+                                                onClick={() => buyListing(l)}
+                                                className="bg-yellow-400 text-black px-3 py-1 rounded text-xs font-semibold hover:bg-yellow-300"
+                                            >
+                                                Buy
+                                            </button>
+                                        )}
+                                        {!user && (
+                                            <span className="text-gray-500 text-xs">Log in to buy</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
 
         </div>
     );

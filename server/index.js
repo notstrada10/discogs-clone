@@ -248,6 +248,65 @@ app.delete("/collection/:id", async (req, res) => {
     res.json({ success: true });
 });
 
+// Listings
+app.get("/listings/:discogs_release_id", async (req, res) => {
+    const result = await pool.query(
+        `SELECT l.id, l.price, l.condition, l.description, l.title, l.artist, l.cover_image,
+                u.name AS seller_name, l.seller_id
+         FROM listings l
+         JOIN users u ON u.id = l.seller_id
+         WHERE l.discogs_release_id = $1
+         ORDER BY l.price ASC`,
+        [req.params.discogs_release_id]
+    );
+    res.json(result.rows);
+});
+
+app.post("/listings", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    const { discogs_release_id, price, condition, description, title, artist, cover_image } = req.body;
+
+    // Must be in collection
+    const inCollection = await pool.query(
+        "SELECT id FROM collections WHERE user_id = $1 AND discogs_release_id = $2",
+        [req.user.id, discogs_release_id]
+    );
+    if (inCollection.rows.length === 0) return res.status(403).json({ error: "Not in your collection" });
+
+    // No duplicate listing
+    const existing = await pool.query(
+        "SELECT id FROM listings WHERE seller_id = $1 AND discogs_release_id = $2",
+        [req.user.id, discogs_release_id]
+    );
+    if (existing.rows.length > 0) return res.status(409).json({ error: "Already listed" });
+
+    const result = await pool.query(
+        `INSERT INTO listings (discogs_release_id, seller_id, price, condition, description, title, artist, cover_image)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [discogs_release_id, req.user.id, price, condition, description, title, artist, cover_image]
+    );
+    res.json(result.rows[0]);
+});
+
+app.delete("/listings/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    await pool.query(
+        "DELETE FROM listings WHERE id = $1 AND seller_id = $2",
+        [req.params.id, req.user.id]
+    );
+    res.json({ success: true });
+});
+
+app.post("/listings/:id/buy", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not logged in" });
+    const listing = await pool.query("SELECT * FROM listings WHERE id = $1", [req.params.id]);
+    if (listing.rows.length === 0) return res.status(404).json({ error: "Listing not found" });
+    if (listing.rows[0].seller_id === req.user.id) return res.status(400).json({ error: "Cannot buy your own listing" });
+
+    await pool.query("DELETE FROM listings WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
